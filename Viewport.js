@@ -23,6 +23,12 @@ Viewport.prototype.setY = function(y) {
     this.updateBG();
 }
 
+Viewport.prototype.setPosition = function(x,y) {
+    this.position.x = x;
+    this.position.y = y;
+    this.updateBG();
+}
+
 Viewport.prototype.updateBG = function() {
     var self = this;
     _.each(this.backgrounds,function(bg) {

@@ -1,6 +1,6 @@
 function GameObject(texture, x, y, scaleX, scaleY) {
     this.position = new PIXI.Point(x,y);
-    this.velocity = new PIXI.Point(x,y);
+    this.velocity = new PIXI.Point(0,0);
     this.rvel = 0;
 
     this.visible = true;
@@ -13,12 +13,12 @@ function GameObject(texture, x, y, scaleX, scaleY) {
 }
 
 GameObject.prototype.update = function(viewport) {
-    this.x += this.xvel;
-    this.y += this.yvel;
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
     this.sprite.rotation += this.rvel;
 
     //this.sprite.visible = this.visible && viewport.isVisible(this);
 
-    this.sprite.x = -(viewport.position.x - viewport.width/2) - this.position.x;
-    this.sprite.y = -(viewport.position.y - viewport.height/2) - this.position.y;
+    this.sprite.x = (viewport.position.x + viewport.width/2) - this.position.x;
+    this.sprite.y = (viewport.position.y + viewport.height/2) - this.position.y;
 }
