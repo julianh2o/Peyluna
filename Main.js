@@ -1,5 +1,5 @@
 function Main() {
-    this.stage = new PIXI.Stage(0x66FF99);
+    this.stage = new PIXI.Stage(0x000);
     this.renderer = PIXI.autoDetectRenderer(400, 300);
     document.body.appendChild(this.renderer.view);
 
@@ -18,7 +18,10 @@ function Main() {
     this.addObject(this.ship);
 
     var dimensions = new PIXI.Point(500,500);
-    this.addObject(new Wall(dimensions.x,dimensions.y,-dimensions.x,dimensions.y));
+    this.addObject(new Wall(dimensions.x,0,dimensions.y*2,0))
+    this.addObject(new Wall(-dimensions.x,0,dimensions.y*2,0))
+    this.addObject(new Wall(0,dimensions.y,dimensions.x*2,Math.PI/2))
+    this.addObject(new Wall(0,-dimensions.y,dimensions.x*2,Math.PI/2))
 
     /*
     var star = new PIXI.Sprite(new PIXI.Texture.fromImage("star.png"));
@@ -48,16 +51,20 @@ function Main() {
     });
 
     requestAnimFrame( this.update.bind(this) );
+    this.resize();
+    window.addEventListener("resize",this.resize.bind(this),false);
+}
+
+Main.prototype.resize = function() {
+    var screenHeight = window.innerHeight;
+    var screenWidth = window.innerWidth;
+    this.renderer.resize(screenWidth,screenHeight);
+    this.viewport.resize(screenWidth,screenHeight);
 }
 
 Main.prototype.addObject = function(obj) {
-    if (obj instanceof GameObject) {
-        this.gameObjects.push(obj);
-        this.stage.addChild(obj.sprite);
-    } else if (obj instanceof Wall) {
-        this.gameObjects.push(obj);
-        this.stage.addChild(obj.g);
-    }
+    this.gameObjects.push(obj);
+    this.stage.addChild(obj.sprite);
 }
 
 Main.prototype.update = function() {
@@ -92,7 +99,21 @@ Main.prototype.update = function() {
     */
 
     _.each(this.gameObjects,function(go) {
+        var previousPosition = _.clone(go.position);
+        var previousVelocity = _.clone(go.velocity);
         go.update(self.viewport);
+        _.each(self.gameObjects,function(go2) {
+            if (go === go2) return;
+            if (go === self.ship && go.collisionImmunity == 0 && go2 instanceof Wall && go.collidesWith(go2.sprite)) {
+                go.position = previousPosition;
+                go.collisionImmunity = 4;
+                if (go2.sprite.rotation == 0) {
+                    go.velocity.x = -go.velocity.x*.5;
+                } else {
+                    go.velocity.y = -go.velocity.y*.5;
+                }
+            }
+        });
     });
     //end update code
 

@@ -8,6 +8,16 @@ function Viewport(stage, width, height) {
     this.addBackground(new Background(PIXI.Texture.fromImage("starbg.jpg"),width, height, 1, 1));
 }
 
+Viewport.prototype.resize = function(x,y) {
+    this.width = x;
+    this.height = y;
+
+    _.each(this.backgrounds,function(bg) {
+        bg.width = x;
+        bg.height = y;
+    });
+}
+
 Viewport.prototype.addBackground = function(bg) {
     this.stage.addChild(bg);
     this.backgrounds.push(bg);
