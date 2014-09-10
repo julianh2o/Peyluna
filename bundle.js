@@ -1,4 +1,36 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/var/www/Peyluna/Main.js":[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/private/var/www/Peyluna/GameObject.js":[function(require,module,exports){
+var Point = require("./Point.js");
+var Rectangle = require("./Rectangle.js");
+
+function GameObject(x, y, sizeX, sizeY, rotation) {
+    this.position = new Point(x,y);
+    this.velocity = new Point(0,0);
+    this.size = new Point(sizeX,sizeY);
+    this.rotation = rotation;
+    this.rvel = 0;
+    this.collisionImmunity = 0;
+}
+
+GameObject.prototype.collidesWith = function(object) {
+    return Util.rectangleCollision(this.getBoundingRectangle(),object.getBoundingRectangle());
+}
+
+GameObject.prototype.getBoundingRectangle = function() {
+    return new Rectangle(this.position.x,this.position.y,this.size.x,this.size.y);
+}
+
+GameObject.prototype.update = function() {
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+    this.sprite.rotation += this.rvel;
+    if (this.collisionImmunity > 0) this.collisionImmunity--;
+
+    //this.sprite.visible = this.visible && viewport.isVisible(this);
+}
+
+module.exports = GameObject;
+
+},{"./Point.js":"/private/var/www/Peyluna/Point.js","./Rectangle.js":"/private/var/www/Peyluna/Rectangle.js"}],"/private/var/www/Peyluna/Main.js":[function(require,module,exports){
 var NetworkManager = require("./NetworkManager.js");
 var Universe = require("./Universe.js");
 var Renderer = require("./Renderer.js");
@@ -37,7 +69,6 @@ function Main() {
 Main.prototype.onUniverse = function(universe) {
     this.universe = universe;
     this.renderer = new Renderer(this.universe,this.viewport);
-    console.log("universe rec",universe);
 }
 
 Main.prototype.update = function() {
@@ -81,7 +112,7 @@ Main.prototype.update = function() {
 
 window.Main = Main;
 
-},{"./NetworkManager.js":"/var/www/Peyluna/NetworkManager.js","./Renderer.js":"/var/www/Peyluna/Renderer.js","./Universe.js":"/var/www/Peyluna/Universe.js","./Viewport.js":"/var/www/Peyluna/Viewport.js"}],"/var/www/Peyluna/NetworkManager.js":[function(require,module,exports){
+},{"./NetworkManager.js":"/private/var/www/Peyluna/NetworkManager.js","./Renderer.js":"/private/var/www/Peyluna/Renderer.js","./Universe.js":"/private/var/www/Peyluna/Universe.js","./Viewport.js":"/private/var/www/Peyluna/Viewport.js"}],"/private/var/www/Peyluna/NetworkManager.js":[function(require,module,exports){
 function NetworkManager() {
     this.socket = io.connect("http://"+window.location.hostname+":9000");
 
@@ -96,7 +127,7 @@ NetworkManager.prototype.onUniverse = function(callback) {
 
 module.exports = NetworkManager;
 
-},{}],"/var/www/Peyluna/Point.js":[function(require,module,exports){
+},{}],"/private/var/www/Peyluna/Point.js":[function(require,module,exports){
 function Point(x,y) {
     this.x = x;
     this.y = y;
@@ -104,7 +135,7 @@ function Point(x,y) {
 
 module.exports = Point;
 
-},{}],"/var/www/Peyluna/Rectangle.js":[function(require,module,exports){
+},{}],"/private/var/www/Peyluna/Rectangle.js":[function(require,module,exports){
 function Rectangle(x,y,width,height) {
     this.position = new Point(x,y);
     this.size = new Point(width,height);
@@ -112,13 +143,18 @@ function Rectangle(x,y,width,height) {
 
 module.exports = Rectangle;
 
-},{}],"/var/www/Peyluna/Renderer.js":[function(require,module,exports){
+},{}],"/private/var/www/Peyluna/Renderer.js":[function(require,module,exports){
+var Wall = require("./Wall.js");
+var Ship = require("./Ship.js");
+
 function Renderer(universe,viewport) {
     this.stage = new PIXI.Stage(0x000);
     this.renderer = PIXI.autoDetectRenderer(400, 300);
     document.body.appendChild(this.renderer.view);
     this.universe = universe;
     this.viewport = viewport;
+    this.spriteAssignment = {};
+    this.spritePool = [];
 
     //this.addBackground(new Background(PIXI.Texture.fromImage("starbg.jpg"),width, height, 1, 1));
 
@@ -133,7 +169,20 @@ Renderer.prototype.resize = function() {
     //this.viewport.resize(screenWidth,screenHeight);
 }
 
+Renderer.prototype.getTexture = function(obj) {
+    if (obj instanceof Wall) return PIXI.Texture.fromImage("wall.png");
+    if (obj instanceof Ship) return PIXI.Texture.fromImage("ship.gif");
+}
+
 Renderer.prototype.render = function() {
+    var self = this;
+    _.each(this.universe.objects,function(obj) {
+        var sprite = this.spriteAssignment[obj];
+        if (!sprite) sprite = new PIXI.Sprite(self.getTexture(obj));
+        sprite.x = (self.viewport.position.x + self.viewport.width/2) - obj.position.x;
+        sprite.y = (self.viewport.position.y + self.viewport.height/2) - obj.position.y;
+        sprite.rotation = obj.rotation;
+    });
     //TODO create sprite pool.. iterate over objects, (re)assign sprites
     var shiptexture = PIXI.Texture.fromImage("ship.gif");
 
@@ -143,7 +192,19 @@ Renderer.prototype.render = function() {
 
 module.exports = Renderer;
 
-},{}],"/var/www/Peyluna/Universe.js":[function(require,module,exports){
+},{"./Ship.js":"/private/var/www/Peyluna/Ship.js","./Wall.js":"/private/var/www/Peyluna/Wall.js"}],"/private/var/www/Peyluna/Ship.js":[function(require,module,exports){
+var GameObject = require("./GameObject.js");
+
+function Ship(controller) {
+    this.controller = controller;
+}
+
+Ship.constructor = Ship;
+Ship.prototype = Object.create(GameObject);
+
+module.exports = Ship;
+
+},{"./GameObject.js":"/private/var/www/Peyluna/GameObject.js"}],"/private/var/www/Peyluna/Universe.js":[function(require,module,exports){
 (function (global){
 function Universe() {
     this.objects = [];
@@ -163,7 +224,7 @@ if (typeof global !== "undefined") module.exports = Universe;
 module.exports = Universe;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],"/var/www/Peyluna/Viewport.js":[function(require,module,exports){
+},{}],"/private/var/www/Peyluna/Viewport.js":[function(require,module,exports){
 var Rectangle = require("./Rectangle.js");
 var Point = require("./Point.js");
 
@@ -212,4 +273,16 @@ Viewport.prototype.isVisible = function(gameobject) {
 
 module.exports = Viewport;
 
-},{"./Point.js":"/var/www/Peyluna/Point.js","./Rectangle.js":"/var/www/Peyluna/Rectangle.js"}]},{},["/var/www/Peyluna/Main.js"]);
+},{"./Point.js":"/private/var/www/Peyluna/Point.js","./Rectangle.js":"/private/var/www/Peyluna/Rectangle.js"}],"/private/var/www/Peyluna/Wall.js":[function(require,module,exports){
+var GameObject = require("./GameObject.js");
+
+function Wall(x, y) {
+    GameObject.call(this, x, y, 20, 20);
+}
+
+Wall.constructor = Wall;
+Wall.prototype = Object.create(GameObject);
+
+module.exports = Wall;
+
+},{"./GameObject.js":"/private/var/www/Peyluna/GameObject.js"}]},{},["/private/var/www/Peyluna/Main.js"]);

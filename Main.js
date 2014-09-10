@@ -36,7 +36,6 @@ function Main() {
 Main.prototype.onUniverse = function(universe) {
     this.universe = universe;
     this.renderer = new Renderer(this.universe,this.viewport);
-    console.log("universe rec",universe);
 }
 
 Main.prototype.update = function() {

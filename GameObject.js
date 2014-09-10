@@ -1,11 +1,11 @@
 var Point = require("./Point.js");
 var Rectangle = require("./Rectangle.js");
 
-function GameObject(x, y, sizeX, sizeY, angle) {
+function GameObject(x, y, sizeX, sizeY, rotation) {
     this.position = new Point(x,y);
     this.velocity = new Point(0,0);
     this.size = new Point(sizeX,sizeY);
-    this.angle = angle;
+    this.rotation = rotation;
     this.rvel = 0;
     this.collisionImmunity = 0;
 }
