@@ -1,4 +1,5 @@
 function Main() {
+    this.network = new NetworkManager();
     this.stage = new PIXI.Stage(0x000);
     this.renderer = PIXI.autoDetectRenderer(400, 300);
     document.body.appendChild(this.renderer.view);
