@@ -1,3 +1,5 @@
+var _ = require("underscore");
+
 function Universe() {
     this.objects = [];
 }
@@ -7,10 +9,9 @@ Universe.prototype.addObject = function(obj) {
 }
 
 Universe.prototype.update = function() {
-
+    _.each(this.objects,function(obj) {
+        obj.update();
+    });
 }
-
-if (typeof global !== "undefined") module.exports = Universe;
-
 
 module.exports = Universe;

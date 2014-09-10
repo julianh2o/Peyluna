@@ -1,9 +1,8 @@
 var Rectangle = require("./Rectangle.js");
 var Point = require("./Point.js");
 
-function Viewport(stage, width, height) {
+function Viewport(width, height) {
     this.backgrounds = [];
-    this.stage = stage;
     this.position = new Point(0,0);
     this.width = width;
     this.height = height;
@@ -19,21 +18,14 @@ Viewport.prototype.resize = function(x,y) {
     });
 }
 
-Viewport.prototype.addBackground = function(bg) {
-    this.stage.addChild(bg);
-    this.backgrounds.push(bg);
-}
-
 Viewport.prototype.setPosition = function(x,y) {
     this.position.x = x;
     this.position.y = y;
-    this.updateBG();
 }
 
 Viewport.prototype.move = function(x,y) {
     this.position.x += x;
     this.position.y += y;
-    this.updateBG();
 }
 
 Viewport.prototype.viewableRectangle = function() {

@@ -23,3 +23,5 @@ Background.prototype.setViewport = function(x,y) {
     this.setViewportX(x);
     this.setViewportY(y);
 }
+
+module.exports = Background;

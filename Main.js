@@ -1,5 +1,6 @@
 var NetworkManager = require("./NetworkManager.js");
 var Universe = require("./Universe.js");
+var GameObject = require("./GameObject.js");
 var Renderer = require("./Renderer.js");
 var Viewport = require("./Viewport.js");
 
@@ -8,11 +9,7 @@ function Main() {
     this.network = new NetworkManager();
     this.viewport = new Viewport();
     this.network.onUniverse(this.onUniverse.bind(this));
-
-    /*
-    this.viewport = new Viewport(this.stage,400,300);
-    this.viewport.position.x = 50;
-    this.viewport.position.y = 50;
+    this.network.onUpdate(this.onUpdate.bind(this));
 
     this.keyMap = {
         left: 37,
@@ -21,27 +18,44 @@ function Main() {
         down: 40
     }
 
-    var heldKeys = {};
-    this.heldKeys = heldKeys;
     $(window).keydown(function(e) {
-        heldKeys[e.keyCode] = true;
+        self.network.send("keydown",e.keyCode);
     });
 
     $(window).keyup(function(e) {
-        heldKeys[e.keyCode] = false;
+        self.network.send("keyup",e.keyCode);
     });
-    */
+
+    setInterval(this.update.bind(this),10);
 }
 
 Main.prototype.onUniverse = function(universe) {
     this.universe = universe;
+    this.universe.__proto__ = Universe.prototype;
+    _.each(this.universe.objects,function(obj) {
+        obj.__proto__ = GameObject.prototype;
+    });
+    console.log("object count: ",this.universe.objects.length);
     this.renderer = new Renderer(this.universe,this.viewport);
+    this.renderer.requestRender();
+}
+
+Main.prototype.onUpdate = function(obj) {
+    obj.__proto__ = GameObject.prototype;
+    for (var i=0; i<this.universe.objects.length; i++) {
+        if (this.universe.objects[i].id == obj.id) {
+            this.universe.objects[i] = obj;
+        }
+    }
 }
 
 Main.prototype.update = function() {
     var self = this;
 
+    if (this.universe) this.universe.update();
+
     //update code
+    /*
     if (this.heldKeys[this.keyMap.left]) {
         this.ship.rvel = -0.07;
     } else if (this.heldKeys[this.keyMap.right]) {
@@ -56,7 +70,9 @@ Main.prototype.update = function() {
     }
 
     this.viewport.setPosition(this.ship.position.x,this.ship.position.y);
+    */
 
+    /*
     _.each(this.gameObjects,function(go) {
         var previousPosition = _.clone(go.position);
         var previousVelocity = _.clone(go.velocity);
@@ -74,7 +90,22 @@ Main.prototype.update = function() {
             }
         });
     });
+    */
     //end update code
+    
+    /*
+    var vdx=0,vdy=0;
+    if (this.heldKeys[this.keyMap.left]) vdx+=-1;
+    if (this.heldKeys[this.keyMap.right]) vdx+=1;
+    if (this.heldKeys[this.keyMap.up]) vdy+=-1;
+    if (this.heldKeys[this.keyMap.down]) vdy+=1;
+    if (vdx != 0 || vdy != 0) {
+        this.viewport.move(vdx,vdy);
+        //console.log(this.viewport.position.x,this.viewport.position.y);
+    }
+    */
+
+    if (this.renderer) this.renderer.requestRender();
 }
 
 window.Main = Main;
