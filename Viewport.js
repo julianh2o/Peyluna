@@ -1,11 +1,22 @@
+var Rectangle = require("./Rectangle.js");
+var Point = require("./Point.js");
+
 function Viewport(stage, width, height) {
     this.backgrounds = [];
     this.stage = stage;
-    this.position = new PIXI.Point(0,0);
+    this.position = new Point(0,0);
     this.width = width;
     this.height = height;
+}
 
-    this.addBackground(new Background(PIXI.Texture.fromImage("starbg.jpg"),width, height, 1, 1));
+Viewport.prototype.resize = function(x,y) {
+    this.width = x;
+    this.height = y;
+
+    _.each(this.backgrounds,function(bg) {
+        bg.width = x;
+        bg.height = y;
+    });
 }
 
 Viewport.prototype.addBackground = function(bg) {
@@ -13,21 +24,10 @@ Viewport.prototype.addBackground = function(bg) {
     this.backgrounds.push(bg);
 }
 
-Viewport.prototype.setX = function(x) {
+Viewport.prototype.setPosition = function(x,y) {
     this.position.x = x;
-    this.updateBG();
-}
-
-Viewport.prototype.setY = function(y) {
     this.position.y = y;
     this.updateBG();
-}
-
-Viewport.prototype.updateBG = function() {
-    var self = this;
-    _.each(this.backgrounds,function(bg) {
-        bg.setViewport(self.position.x,self.position.y);
-    });
 }
 
 Viewport.prototype.move = function(x,y) {
@@ -37,9 +37,11 @@ Viewport.prototype.move = function(x,y) {
 }
 
 Viewport.prototype.viewableRectangle = function() {
-    return new PIXI.Rectangle(this.position.x - this.width/2,this.position.y - this.height/2, this.width, this.height);
+    return new Rectangle(this.position.x - this.width/2,this.position.y - this.height/2, this.width, this.height);
 }
 
 Viewport.prototype.isVisible = function(gameobject) {
     return this.viewableRectangle().contains(gameobject.position.x,gameobject.position.y);
 }
+
+module.exports = Viewport;

@@ -1,24 +1,30 @@
-function GameObject(texture, x, y, scaleX, scaleY) {
-    this.position = new PIXI.Point(x,y);
-    this.velocity = new PIXI.Point(x,y);
+var Point = require("./Point.js");
+var Rectangle = require("./Rectangle.js");
+
+function GameObject(x, y, sizeX, sizeY, angle) {
+    this.position = new Point(x,y);
+    this.velocity = new Point(0,0);
+    this.size = new Point(sizeX,sizeY);
+    this.angle = angle;
     this.rvel = 0;
-
-    this.visible = true;
-    this.sprite = new PIXI.Sprite(texture);
-    if (scaleX) this.sprite.scale.x = scaleX;
-    if (scaleY) this.sprite.scale.y = scaleY;
-
-    this.sprite.anchor.x = .5;
-    this.sprite.anchor.y = .5;
+    this.collisionImmunity = 0;
 }
 
-GameObject.prototype.update = function(viewport) {
-    this.x += this.xvel;
-    this.y += this.yvel;
+GameObject.prototype.collidesWith = function(object) {
+    return Util.rectangleCollision(this.getBoundingRectangle(),object.getBoundingRectangle());
+}
+
+GameObject.prototype.getBoundingRectangle = function() {
+    return new Rectangle(this.position.x,this.position.y,this.size.x,this.size.y);
+}
+
+GameObject.prototype.update = function() {
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
     this.sprite.rotation += this.rvel;
+    if (this.collisionImmunity > 0) this.collisionImmunity--;
 
     //this.sprite.visible = this.visible && viewport.isVisible(this);
-
-    this.sprite.x = -(viewport.position.x - viewport.width/2) - this.position.x;
-    this.sprite.y = -(viewport.position.y - viewport.height/2) - this.position.y;
 }
+
+module.exports = GameObject;
