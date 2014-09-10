@@ -5,3 +5,9 @@ function NetworkManager() {
         console.log("client connected!",data);
     });
 }
+
+NetworkManager.prototype.onUniverse = function(callback) {
+    this.socket.on("universe",callback);
+}
+
+module.exports = NetworkManager;

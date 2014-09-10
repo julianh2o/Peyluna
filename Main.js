@@ -1,38 +1,18 @@
-function Main() {
-    this.network = new NetworkManager();
-    this.stage = new PIXI.Stage(0x000);
-    this.renderer = PIXI.autoDetectRenderer(400, 300);
-    document.body.appendChild(this.renderer.view);
+var NetworkManager = require("./NetworkManager.js");
+var Universe = require("./Universe.js");
+var Renderer = require("./Renderer.js");
+var Viewport = require("./Viewport.js");
 
+function Main() {
+    var self = this;
+    this.network = new NetworkManager();
+    this.viewport = new Viewport();
+    this.network.onUniverse(this.onUniverse.bind(this));
+
+    /*
     this.viewport = new Viewport(this.stage,400,300);
     this.viewport.position.x = 50;
     this.viewport.position.y = 50;
-
-    var texture = PIXI.Texture.fromImage("ship.gif");
-
-    this.gameObjects = [];
-
-    this.ship = new GameObject(texture,0,0);
-    this.ship.position.x = 50;
-    this.ship.position.y = 50;
-    this.addObject(new GameObject(PIXI.Texture.fromImage("planet.png"),0,0,.1,.1));
-    this.addObject(this.ship);
-
-    var dimensions = new PIXI.Point(500,500);
-    this.addObject(new Wall(dimensions.x,0,dimensions.y*2,0))
-    this.addObject(new Wall(-dimensions.x,0,dimensions.y*2,0))
-    this.addObject(new Wall(0,dimensions.y,dimensions.x*2,Math.PI/2))
-    this.addObject(new Wall(0,-dimensions.y,dimensions.x*2,Math.PI/2))
-
-    /*
-    var star = new PIXI.Sprite(new PIXI.Texture.fromImage("star.png"));
-    star.anchor.x = .5;
-    star.anchor.y = .5;
-    star.x = 200;
-    star.y = 50;
-    this.stage.addChild(star);
-    */
-
 
     this.keyMap = {
         left: 37,
@@ -50,22 +30,13 @@ function Main() {
     $(window).keyup(function(e) {
         heldKeys[e.keyCode] = false;
     });
-
-    requestAnimFrame( this.update.bind(this) );
-    this.resize();
-    window.addEventListener("resize",this.resize.bind(this),false);
+    */
 }
 
-Main.prototype.resize = function() {
-    var screenHeight = window.innerHeight;
-    var screenWidth = window.innerWidth;
-    this.renderer.resize(screenWidth,screenHeight);
-    this.viewport.resize(screenWidth,screenHeight);
-}
-
-Main.prototype.addObject = function(obj) {
-    this.gameObjects.push(obj);
-    this.stage.addChild(obj.sprite);
+Main.prototype.onUniverse = function(universe) {
+    this.universe = universe;
+    this.renderer = new Renderer(this.universe,this.viewport);
+    console.log("universe rec",universe);
 }
 
 Main.prototype.update = function() {
@@ -87,18 +58,6 @@ Main.prototype.update = function() {
 
     this.viewport.setPosition(this.ship.position.x,this.ship.position.y);
 
-    /*
-    var vdx=0,vdy=0;
-    if (this.heldKeys[this.keyMap.left]) vdx+=-1;
-    if (this.heldKeys[this.keyMap.right]) vdx+=1;
-    if (this.heldKeys[this.keyMap.up]) vdy+=-1;
-    if (this.heldKeys[this.keyMap.down]) vdy+=1;
-    if (vdx != 0 || vdy != 0) {
-        this.viewport.move(vdx,vdy);
-        console.log(this.viewport.position.x,this.viewport.position.y);
-    }
-    */
-
     _.each(this.gameObjects,function(go) {
         var previousPosition = _.clone(go.position);
         var previousVelocity = _.clone(go.velocity);
@@ -117,8 +76,6 @@ Main.prototype.update = function() {
         });
     });
     //end update code
-
-    // render the stage
-    this.renderer.render(this.stage);
-    requestAnimFrame( this.update.bind(this) );
 }
+
+window.Main = Main;

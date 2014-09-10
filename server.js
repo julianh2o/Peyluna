@@ -1,7 +1,23 @@
+var Universe = require("./Universe.js");
+var Wall = require("./Wall.js");
+
 var app = require("express")();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var _ = require("underscore");
+
+var universe = new Universe();
+var mapWidth = 500;
+var mapHeight = 500;
+for (var i=0; i<mapWidth; i++) {
+    universe.addObject(new Wall(i,mapHeight));
+    universe.addObject(new Wall(i,-mapHeight));
+}
+
+for (var i=0; i<mapHeight; i++) {
+    universe.addObject(new Wall(mapWidth,i));
+    universe.addObject(new Wall(-mapWidth,i));
+}
 
 var allowCrossDomain = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost");
@@ -25,6 +41,8 @@ io.on("connection",function(socket) {
     _.each(clients,function(client) {
         client.emit('client',ip);
     });
+
+    socket.emit("universe",JSON.stringify(universe));
 
     console.log("user connected!");
 });
