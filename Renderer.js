@@ -8,14 +8,25 @@ function Renderer(universe,viewport) {
     document.body.appendChild(this.renderer.view);
     this.universe = universe;
     this.viewport = viewport;
-    this.spriteAssignment = {};
-    this.spritePool = [];
+    this.spritePool = {};
+
+    this.activeShip = -1;
+    this.activeIndicator = new PIXI.Sprite(PIXI.Texture.fromImage("star.png"));
+    this.activeIndicator.anchor.x = .5;
+    this.activeIndicator.anchor.y = .5;
+    this.activeIndicator.width = 10;
+    this.activeIndicator.height = 10;
 
     this.background = new Background(PIXI.Texture.fromImage("starbg.jpg"),this.viewport.width, this.viewport.height, 1, 1);
     this.stage.addChild(this.background);
+    this.stage.addChild(this.activeIndicator);
 
     this.resize();
     window.addEventListener("resize",this.resize.bind(this),false);
+}
+
+Renderer.prototype.setActiveShip = function(shipId) {
+    this.activeShip = shipId;
 }
 
 Renderer.prototype.resize = function() {
@@ -33,32 +44,48 @@ Renderer.prototype.getTexture = function(obj) {
     if (obj.type == "Ship") return PIXI.Texture.fromImage("ship.gif");
 }
 
+Renderer.prototype.getSprite = function(obj) {
+    if (!this.spritePool[obj.type]) this.spritePool[obj.type] = [];
+    var pool = this.spritePool[obj.type];
+    if (pool.length == 0) {
+        var sprite = new PIXI.Sprite(this.getTexture(obj));
+        sprite.type = obj.type;
+        sprite.anchor.x = .5;
+        sprite.anchor.y = .5;
+        return sprite;
+    }
+    return pool.shift();
+}
+
 Renderer.prototype.requestRender = function() {
     requestAnimFrame(this.render.bind(this));
 }
 
 Renderer.prototype.render = function() {
     var self = this;
+    var usedSprites = [];
     this.background.setViewport(this.viewport.position.x,this.viewport.position.y);
     _.each(this.universe.objects,function(obj) {
-        var sprite = self.spriteAssignment[obj.id];
-        if (!sprite) {
-            sprite = new PIXI.Sprite(self.getTexture(obj));
-            sprite.anchor.x = .5;
-            sprite.anchor.y = .5;
-            self.spriteAssignment[obj.id] = sprite;
-            self.stage.addChild(sprite);
-        }
+        var sprite = self.getSprite(obj);
+        usedSprites.push(sprite);
+        self.stage.addChild(sprite);
         sprite.x = (self.viewport.position.x + self.viewport.width/2) - obj.position.x;
         sprite.y = (self.viewport.position.y + self.viewport.height/2) - obj.position.y;
+        if (self.activeShip == obj.id) {
+            self.activeIndicator.x = sprite.x - 10;
+            self.activeIndicator.y = sprite.y - 20;
+        }
         sprite.width = obj.size.x;
         sprite.height = obj.size.y;
         sprite.rotation = obj.rotation;
     });
-    //TODO create sprite pool.. iterate over objects, (re)assign sprites
-    //var shiptexture = PIXI.Texture.fromImage("ship.gif");
 
     this.renderer.render(this.stage);
+
+    _.each(usedSprites,function(sprite) {
+        self.spritePool[sprite.type].push(sprite);
+        self.stage.removeChild(sprite);
+    });
 }
 
 module.exports = Renderer;

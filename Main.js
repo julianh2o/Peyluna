@@ -6,10 +6,13 @@ var Viewport = require("./Viewport.js");
 
 function Main() {
     var self = this;
-    this.network = new NetworkManager();
     this.viewport = new Viewport();
-    this.network.onUniverse(this.onUniverse.bind(this));
-    this.network.onUpdate(this.onUpdate.bind(this));
+
+    var $button = $("<button />").text("connect").click(function() {
+        $(this).remove();
+        self.connect();
+    });
+    $("body").append($button);
 
     this.keyMap = {
         left: 37,
@@ -17,6 +20,26 @@ function Main() {
         right: 39,
         down: 40
     }
+}
+
+Main.prototype.connect = function() {
+    var self = this;
+    this.network = new NetworkManager();
+    this.network.onUniverse(this.onUniverse.bind(this));
+    this.network.onUpdate(this.onUpdate.bind(this));
+    this.network.onClientInfo($.proxy(function(clientInfo) {
+        this.clientInfo = clientInfo;
+        if (this.renderer) this.renderer.setActiveShip(this.clientInfo.shipId);
+    },this));
+    this.network.on("objectAdded",$.proxy(function(obj) {
+        if (this.universe) {
+            this.universe.addObject(obj);
+        }
+    },this),false);
+    this.network.on("objectRemoved",$.proxy(function(idstr) {
+        var id = parseInt(idstr);
+        this.universe.removeObject({id:id});
+    },this),false);
 
     $(window).keydown(function(e) {
         self.network.send("keydown",e.keyCode);
@@ -35,8 +58,8 @@ Main.prototype.onUniverse = function(universe) {
     _.each(this.universe.objects,function(obj) {
         obj.__proto__ = GameObject.prototype;
     });
-    console.log("object count: ",this.universe.objects.length);
     this.renderer = new Renderer(this.universe,this.viewport);
+    if (this.clientInfo) this.renderer.setActiveShip(this.clientInfo.shipId);
     this.renderer.requestRender();
 }
 

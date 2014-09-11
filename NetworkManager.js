@@ -18,6 +18,23 @@ NetworkManager.prototype.onUpdate = function(callback) {
     });
 }
 
+NetworkManager.prototype.onClientInfo = function(callback) {
+    this.socket.on("clientinfo",function(str) {
+        callback(JSON.parse(str));
+    });
+}
+
+NetworkManager.prototype.on = function(type,callback,json) {
+    this.socket.on(type,function(str) {
+        if (json) {
+            console.log("str",str);
+            callback(JSON.parse(str));
+        } else {
+            callback(str);
+        }
+    });
+}
+
 NetworkManager.prototype.send = function(type,data) {
     this.socket.emit(type,data);
 }

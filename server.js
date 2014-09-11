@@ -30,34 +30,43 @@ var allowCrossDomain = function(req, res, next) {
 app.use(allowCrossDomain);
 
 var clients = [];
+function emitAll(type,data) {
+    _.each(clients,function(client) {
+        client.emit(type,data);
+    });
+}
 io.on("connection",function(socket) {
     clients.push(socket);
-    socket.on('disconnect', function() {
-        var index = clients.indexOf(socket);
-        clients.splice(index, 1);
-        console.log("client disconnected");
-    });
 
     socket.heldKeys = {};
     socket.on("keydown",function(key) {
-        console.log("keydown",key);
         socket.heldKeys[key] = true;
     });
 
     socket.on("keyup",function(key) {
-        console.log("keyup",key);
         socket.heldKeys[key] = false;
     });
 
     var ip = socket.handshake.address;
-    _.each(clients,function(client) {
-        client.emit('client',ip);
-    });
+    emitAll("client",ip);
 
     var ship = new Ship(clients.length-1)
     socket.ship = ship;
+    emitAll("objectAdded",ship);
     universe.addObject(ship);
     socket.emit("universe",JSON.stringify(universe));
+    socket.emit("clientinfo",JSON.stringify({
+        clientId: clients.length-1,
+        shipId: ship.id
+    }));
+
+    socket.on('disconnect', function() {
+        var index = clients.indexOf(socket);
+        clients.splice(index, 1);
+        universe.removeObject(ship);
+        emitAll("objectRemoved",ship.id);
+        console.log("client disconnected");
+    });
 
     console.log("user connected!");
 });
