@@ -3,9 +3,11 @@ function Util() {
 }
 
 Util.rectangleCollision = function(a,b) {
-    if (a.x > b.x+b.width) return false; //missed left
-    if (a.x+a.width < b.x) return false; //missed right
-    if (a.y > b.y+b.height) return false; //missed up
-    if (a.y+a.height < b.y) return false; //missed down
+    if (a.position.x > b.position.x+b.size.x) return false; //missed left
+    if (a.position.x+a.size.x < b.position.x) return false; //missed right
+    if (a.position.y > b.position.y+b.size.y) return false; //missed up
+    if (a.position.y+a.size.y < b.position.y) return false; //missed down
     return true;
 }
+
+module.exports = Util;

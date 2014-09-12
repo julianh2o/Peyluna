@@ -13,6 +13,8 @@ var mapHeight = 500;
 for (var i=0; i<=mapWidth; i+=20) {
     universe.addObject(new Wall(i-mapWidth/2,mapHeight/2));
     universe.addObject(new Wall(i-mapWidth/2,-mapHeight/2));
+    universe.objects[universe.objects.length-1].rotation = Math.PI/2;
+    universe.objects[universe.objects.length-2].rotation = Math.PI/2;
 }
 
 for (var i=0; i<=mapHeight; i+=20) {

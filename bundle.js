@@ -28,6 +28,7 @@ Background.prototype.setViewport = function(x,y) {
 module.exports = Background;
 
 },{}],"/var/www/Peyluna/GameObject.js":[function(require,module,exports){
+var Util = require("./Util.js");
 var Point = require("./Point.js");
 var Rectangle = require("./Rectangle.js");
 
@@ -70,7 +71,7 @@ GameObject.prototype.update = function() {
 
 module.exports = GameObject;
 
-},{"./Point.js":"/var/www/Peyluna/Point.js","./Rectangle.js":"/var/www/Peyluna/Rectangle.js"}],"/var/www/Peyluna/Main.js":[function(require,module,exports){
+},{"./Point.js":"/var/www/Peyluna/Point.js","./Rectangle.js":"/var/www/Peyluna/Rectangle.js","./Util.js":"/var/www/Peyluna/Util.js"}],"/var/www/Peyluna/Main.js":[function(require,module,exports){
 var NetworkManager = require("./NetworkManager.js");
 var Universe = require("./Universe.js");
 var GameObject = require("./GameObject.js");
@@ -259,6 +260,8 @@ function Point(x,y) {
 module.exports = Point;
 
 },{}],"/var/www/Peyluna/Rectangle.js":[function(require,module,exports){
+var Point = require("./Point.js");
+
 function Rectangle(x,y,width,height) {
     this.position = new Point(x,y);
     this.size = new Point(width,height);
@@ -266,7 +269,7 @@ function Rectangle(x,y,width,height) {
 
 module.exports = Rectangle;
 
-},{}],"/var/www/Peyluna/Renderer.js":[function(require,module,exports){
+},{"./Point.js":"/var/www/Peyluna/Point.js"}],"/var/www/Peyluna/Renderer.js":[function(require,module,exports){
 var Wall = require("./Wall.js");
 var Ship = require("./Ship.js");
 var Background = require("./Background.js");
@@ -391,14 +394,44 @@ Universe.prototype.removeObject = function(obj) {
 }
 
 Universe.prototype.update = function() {
-    _.each(this.objects,function(obj) {
-        obj.update();
+    var self = this;
+    _.each(this.objects,function(go) {
+        var previousPosition = _.clone(go.position);
+        var previousVelocity = _.clone(go.velocity);
+        go.update();
+        _.each(self.objects,function(go2) {
+            if (go === go2) return;
+            if (go.type == "Ship" && go.collisionImmunity == 0 && go2.type == "Wall" && go.collidesWith(go2)) {
+                go.position = previousPosition;
+                go.collisionImmunity = 4;
+                if (go2.rotation == 0) {
+                    go.velocity.x = -go.velocity.x*.5;
+                } else {
+                    go.velocity.y = -go.velocity.y*.5;
+                }
+            }
+        });
     });
 }
 
 module.exports = Universe;
 
-},{"underscore":"/var/www/Peyluna/node_modules/underscore/underscore.js"}],"/var/www/Peyluna/Viewport.js":[function(require,module,exports){
+},{"underscore":"/var/www/Peyluna/node_modules/underscore/underscore.js"}],"/var/www/Peyluna/Util.js":[function(require,module,exports){
+function Util() {
+
+}
+
+Util.rectangleCollision = function(a,b) {
+    if (a.position.x > b.position.x+b.size.x) return false; //missed left
+    if (a.position.x+a.size.x < b.position.x) return false; //missed right
+    if (a.position.y > b.position.y+b.size.y) return false; //missed up
+    if (a.position.y+a.size.y < b.position.y) return false; //missed down
+    return true;
+}
+
+module.exports = Util;
+
+},{}],"/var/www/Peyluna/Viewport.js":[function(require,module,exports){
 var Rectangle = require("./Rectangle.js");
 var Point = require("./Point.js");
 

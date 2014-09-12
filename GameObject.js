@@ -1,3 +1,4 @@
+var Util = require("./Util.js");
 var Point = require("./Point.js");
 var Rectangle = require("./Rectangle.js");
 
